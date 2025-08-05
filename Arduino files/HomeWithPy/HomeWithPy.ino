@@ -3,11 +3,11 @@
 #define MOTOR_INTERFACE_TYPE AccelStepper::DRIVER
 
 // Pins for X axis stepper
-#define X_STEP_PIN 2
-#define X_DIR_PIN 5
+#define X_STEP_PIN 3
+#define X_DIR_PIN 6
 
 // Endstop pin
-#define X_ENDSTOP_PIN 10
+#define X_ENDSTOP_PIN 11
 
 AccelStepper stepperX(MOTOR_INTERFACE_TYPE, X_STEP_PIN, X_DIR_PIN);
 

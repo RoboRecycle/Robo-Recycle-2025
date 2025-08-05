@@ -1,4 +1,4 @@
-#define ENDSTOP_PIN 10
+#define ENDSTOP_PIN 9
 
 void setup() {
   Serial.begin(9600);
@@ -14,5 +14,5 @@ void loop() {
     Serial.println("ENDSTOP OPEN");
   }
 
-  delay(500);  // Half second delay to avoid flooding serial
+  delay(5000);  // Half second delay to avoid flooding serial
 }

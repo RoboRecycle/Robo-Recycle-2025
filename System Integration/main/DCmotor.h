@@ -3,11 +3,6 @@
 
 #include <Arduino.h>
 
-// Pin definitions
-const int IN1 = 5;
-const int IN2 = 4;
-const int ENA = 6;
-
 /**
  * @brief Initialize the DC motor driver pins.
  */

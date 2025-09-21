@@ -31,4 +31,9 @@ float Encoder_GetSpeedRPM();
  */
 int Encoder_GetDirection();
 
+/**
+ * @brief Reset encoder counts
+ */
+void Encoder_Reset();  
+
 #endif

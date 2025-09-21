@@ -19,6 +19,11 @@
   - The (1,1) state is typically avoided to prevent conflict in the H-bridge.
 */
 
+// Pin definitions
+const int IN1 = 5;
+const int IN2 = 4;
+const int ENA = 6;
+
 void DCmotor_Init() {
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);

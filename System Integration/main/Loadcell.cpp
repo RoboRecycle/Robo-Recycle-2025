@@ -1,14 +1,27 @@
 #include "Loadcell.h"
 
 void Loadcell_Init() {
-  // TODO: implement load cell initialization (HX711, pins, calibration)
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  
+  // // Wait for the chip to be ready
+  // while (!scale.is_ready()) {
+  //   Serial.println("Waiting for load cell to be ready...");
+  //   delay(100);
+  // }
+  
+  // Set the calibration factor
+  scale.set_scale(LOADCELL_CALIBRATION_FACTOR);
+  
+  // Tare the scale to zero
+  scale.tare();
+  
+  Serial.println("Load cell initialized and tared");
 }
 
 float Loadcell_Read() {
-  // TODO: return current load value
-  return 0.0;
+  return scale.get_units(LOADCELL_READING_NUMBER);  // Get average of LOADCELL_READING_NUMBER of readings, returns calibrated value
 }
 
 void Loadcell_Tare() {
-  // TODO: implement tare/zeroing function
+  scale.tare();
 }

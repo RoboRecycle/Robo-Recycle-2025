@@ -10,11 +10,11 @@
 */
 
 // --- Encoder pins ---
-const byte encoder0pinA = 5;//A pin -> the interrupt pin 0
-const byte encoder0pinB = 6;//B pin -> the digital pin 4
+const byte encoder0pinA = 23;//A pin -> the interrupt pin 0
+const byte encoder0pinB = 25;//B pin -> the digital pin 4
 
 // --- Encoder constants ---
-const int CPR = 700; // Counts per revolution (adjust as needed)
+const int CPR = 2096; 
 
 // --- Internal state ---
 volatile long pulseCount = 0;

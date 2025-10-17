@@ -41,27 +41,40 @@ void setup() {
 /**
  * @brief Arduino main loop. Application logic goes here.
  */
+
 void loop() {
-  Stepper_HomeAll();
-  Loadcell_Tare();
+
+  //Stepper_HomeAll();
+  //Loadcell_Tare();
   Serial.println("System Homed and Ready");
   // -------------------------
   // Wait for target coordinates: 
   // in form: X Y
   // eg: 100.0 50.5
   // -------------------------
-  if (Serial.available() > 0) {
-    String input = Serial.readStringUntil('\n');
-    if (sscanf(input.c_str(), "%f %f", &targetX, &targetY) == 2) {
-      Serial.print("Moving to X: ");
-      Serial.print(targetX);
-      Serial.print(" Y: ");
-      Serial.println(targetY);
-    }
+  
+  Serial.println("Moving to screw");
+  
+  float rpm = Loadcell_Read();
+  while (true) {
+    rpm = Loadcell_Read();
+    
+    Serial.println(rpm);
   }
 
-  Stepper_MoveTo(targetX, targetY, 0.0);
-
+  // Stepper_MoveTo(220, 190.5, 200);
+  // Motor_Forward(20);
+  // float rpm = Encoder_GetSpeedRPM();
+  // while (true) {
+  //    rpm = Encoder_GetSpeedRPM();
+  //    Encoder_Update();
+  //    Serial.println(rpm);
+    
+  // }
+  
+  //Stepper_MoveTo(220, 190.5, 209);
+  //Stepper_MoveTo(220, 190.5, 150);
+  /**
   // -------------------------
   // Lower Z until load cell threshold is met
   // -------------------------
@@ -108,4 +121,5 @@ void loop() {
   Serial.println("Moving screw to disposal area...");
   Stepper_MoveTo(SCREW_DISPOSAL_X, SCREW_DISPOSAL_Y, SCREW_DISPOSAL_Z);
   delay(5000); // Wait for 1 second (1000 milliseconds)
+  **/
 }

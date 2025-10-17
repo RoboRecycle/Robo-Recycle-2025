@@ -1,17 +1,13 @@
 #ifndef LOADCELL_H
 #define LOADCELL_H
-
-#include <Arduino.h>
 #include "HX711.h"
-
-// HX711 instance
-HX711 loadcell;
+#include <Arduino.h>
 
 // === CONFIG ===
-#define LOADCELL_DOUT_PIN 2   // Data pin
-#define LOADCELL_SCK_PIN 3    // Clock pin
-#define LOADCELL_CALIBRATION_FACTOR 1.0   // To be calibrated
-#define LOADCELL_READING_NUMBER 1
+#define LOADCELL_DOUT_PIN 52   // Data pin
+#define LOADCELL_SCK_PIN 50  // Clock pin
+#define LOADCELL_CALIBRATION_FACTOR 2280   // To be calibrated
+#define LOADCELL_READING_NUMBER 5
 
 /**
  * @brief Initialize the load cell hardware and amplifier (e.g., HX711)

@@ -20,9 +20,9 @@
 */
 
 // Pin definitions
-const int IN1 = 5;
-const int IN2 = 4;
-const int ENA = 6;
+const int IN1 = 41;
+const int IN2 = 43;
+const int ENA = 45;
 
 void DCmotor_Init() {
   pinMode(IN1, OUTPUT);

@@ -29,13 +29,14 @@ float targetZ = 0.0;
  * @brief Arduino setup function. Initializes all subsystems.
  */
 void setup() {
+  Serial.println("System Homed and Ready");
   Serial.begin(115200);
   Serial.println("R2 Robot Starting...");
 
-  DCmotor_Init();
+  //DCmotor_Init();
   STEPPERmotor_Init();
-  Encoder_Init();
-  Loadcell_Init();
+  // Encoder_Init();
+  // Loadcell_Init();
 }
 
 /**
@@ -44,7 +45,7 @@ void setup() {
 
 void loop() {
 
-  //Stepper_HomeAll();
+  Stepper_HomeAll();
   //Loadcell_Tare();
   Serial.println("System Homed and Ready");
   // -------------------------
@@ -55,14 +56,14 @@ void loop() {
   
   Serial.println("Moving to screw");
   
-  float rpm = Loadcell_Read();
-  while (true) {
-    rpm = Loadcell_Read();
+  // float rpm = Loadcell_Read();
+  // while (true) {
+  //   rpm = Loadcell_Read();
     
-    Serial.println(rpm);
-  }
+  //   Serial.println(rpm);
+  // }
 
-  // Stepper_MoveTo(220, 190.5, 200);
+  //Stepper_MoveTo(220, 190.5, 200);
   // Motor_Forward(20);
   // float rpm = Encoder_GetSpeedRPM();
   // while (true) {

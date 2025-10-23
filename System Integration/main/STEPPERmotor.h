@@ -1,8 +1,7 @@
 #ifndef STEPPERMOTOR_H
 #define STEPPERMOTOR_H
-#include <AccelStepper.h>
-#include <Arduino.h>
 
+#include <Arduino.h>
 
 
 /**

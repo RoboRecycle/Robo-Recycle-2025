@@ -14,7 +14,7 @@ AccelStepper stepper(MOTOR_INTERFACE_TYPE, STEP_PIN, DIR_PIN);
 void setup() {
   stepper.setMaxSpeed(200);       // steps/second
   stepper.setAcceleration(100);   // steps/sec^2
-  stepper.moveTo(-500);            // move 200 steps forward
+  stepper.moveTo(-2000);            // move 200 steps forward
 }
 
 void loop() {

@@ -14,124 +14,333 @@
 #define STEPPER_INCREMENT 0.1
 
 float load_cell_reading = 0.0;
-
 float motor_speed = 0.0;
-
-
 
 float targetX = 0.0;
 float targetY = 0.0;
 float targetZ = 0.0;
 
+// Serial command buffer
+String inputString = "";
+bool stringComplete = false;
 
-
-/**
- * @brief Arduino setup function. Initializes all subsystems.
- */
 void setup() {
-
+  Serial.begin(115200);
   DCmotor_Init();
   STEPPERmotor_Init();
   Encoder_Init();
   Loadcell_Init();
 
-  //Stepper_HomeAll();
-  Serial.println("System Homed and Ready");
-  Serial.begin(115200);
-  Serial.println("R2 Robot Starting...");
+  Stepper_HomeAll();
+  Serial.println(F("System Homed and Ready"));
+  Serial.println(F("R2 Robot Starting..."));
+  Serial.println(F("Type HELP for commands"));
 
-  // 90 degrees forward at 70% speed, max 3 seconds
-    bool ok = Motor_RotateDegrees(-45, 180, 10000);
-    if (!ok) Serial.println("Timeout!");
-
-    delay(1000);
-
-    // 180 degrees backward
-    Motor_RotateDegrees(45, 200, 3000);
+  inputString.reserve(64);  // prevent memory fragmentation
 }
 
-/**
- * @brief Arduino main loop. Application logic goes here.
- */
+
+void printHelp() {
+  Serial.println(F("\n=== R2 ROBOT COMMANDS ==="));
+  Serial.println(F("HOME                → Home all steppers"));
+  Serial.println(F("GOTO X Y Z          → Move gantry"));
+  Serial.println(F("DRILL deg [spd]     → Rotate drill (spd=0-255)"));
+  Serial.println(F("UNSCREW X Y         → Auto unscrew at X,Y"));
+  Serial.println(F("BRAKE               → Stop drill"));
+  Serial.println(F("RPM                 → Show drill speed"));
+  Serial.println(F("POS                 → Show encoder position"));
+  Serial.println(F("LOAD                → Read load cell"));
+  Serial.println(F("HELP                → This menu"));
+  Serial.println(F("==========================\n"));
+}
 
 void loop() {
-  delay(2000);
-  //Loadcell_Tare();
-  Serial.println("System Homed and Ready");
-  // -------------------------
-  // Wait for target coordinates: 
-  // in form: X Y
-  // eg: 100.0 50.5
-  // -------------------------
-  
-  Serial.println("Moving to screw");
-  
-  // float rpm = Loadcell_Read();
-  // while (true) {
-  //   rpm = Loadcell_Read();
-    
-  //   Serial.println(rpm);
-  // }
+  // --- Serial command parser ---
+  if (stringComplete) {
+    processCommand(inputString);
+    inputString = "";
+    stringComplete = false;
+  }
 
-  Stepper_MoveTo(220, 190.5, 200);
-  delay(2000);
-  // Motor_Forward(20);
-  // float rpm = Encoder_GetSpeedRPM();
-  // while (true) {
-  //    rpm = Encoder_GetSpeedRPM();
-  //    Encoder_Update();
-  //    Serial.println(rpm);
-    
-  // }
-  
-  //Stepper_MoveTo(220, 190.5, 209);
-  //Stepper_MoveTo(220, 190.5, 150);
-  /**
-  // -------------------------
-  // Lower Z until load cell threshold is met
-  // -------------------------
+  // Optional: add background tasks here (e.g. auto-unscrew, monitoring)
+}
+
+void serialEvent() {
+  while (Serial.available()) {
+    char inChar = (char)Serial.read();
+    if (inChar == '\n' || inChar == '\r') {
+      if (inputString.length() > 0) {
+        stringComplete = true;
+      }
+    } else if (inputString.length() < 60) {
+      inputString += inChar;
+    }
+  }
+}
+
+
+/**
+ * @brief Fully automated unscrew routine at given X,Y
+ * @param x Target X coordinate
+ * @param y Target Y coordinate
+ * @return true if screw removed, false on failure/timeout
+ */
+bool autoUnscrew(float x, float y) {
+  const float Z_START       = 200.0;   // safe high Z
+  const float Z_STEP        = 0.5;     // mm per step
+  const float Z_MAX_DROP    = 50.0;    // max Z travel
+  const float DRILL_DEGREES = 720.0;   // 2 full turns per attempt
+  const int    DRILL_SPEED  = 180;
+  const float  ENGAGE_LOAD  = 1800000;     // > this = screw engaged
+  const float  SLIP_LOAD    = 3.0;     // < this = slipped
+  const unsigned long TIMEOUT = 100000; // 15 sec max
+
   unsigned long startTime = millis();
-  const unsigned long TIMEOUT_MS = 3000;
+  float currentZ = Z_START;
 
-  load_cell_reading = Loadcell_Read();
-  while (load_cell_reading < LOADCELL_THRESHOLD) {
-    // check timeout
-    if (millis() - startTime > TIMEOUT_MS) {
-      Serial.println("Timeout: screw not engaged");
-      Motor_Brake();
-      break;            
+  // --- 1. Move to X,Y at safe Z ---
+  Serial.println(F("Moving to XY..."));
+  Stepper_MoveTo(x, y, Z_START);
+  delay(500);
+
+  float load = Loadcell_Read();
+  Serial.print(F("Initial load: ")); Serial.println(load, 3);
+
+  // --- 2. Lower Z until engagement ---
+  Serial.println(F("Lowering Z to engage screw..."));
+  while (load < ENGAGE_LOAD && (millis() - startTime) < TIMEOUT) {
+    currentZ -= Z_STEP;
+    if (currentZ < Z_START - Z_MAX_DROP) {
+      Serial.println(F("Z limit reached."));
+      return false;
+    }
+    Stepper_MoveTo(x, y, currentZ);
+    delay(100);
+    load = Loadcell_Read();
+    Serial.print(F("Z=")); Serial.print(currentZ, 1);
+    Serial.print(F(" Load=")); Serial.println(load, 3);
+  }
+
+  if (load < ENGAGE_LOAD) {
+    Serial.println(F("Failed to engage screw."));
+    return false;
+  }
+
+  Serial.println(F("Screw engaged! Starting unscrew..."));
+
+  // --- 3. Unscrew loop: drill + raise Z ---
+  int attempts = 0;
+  const int MAX_ATTEMPTS = 20;
+
+  while (attempts < MAX_ATTEMPTS && (millis() - startTime) < TIMEOUT) {
+    attempts++;
+    Serial.print(F("Attempt ")); Serial.print(attempts);
+    Serial.print(F(": Drilling ")); Serial.print(DRILL_DEGREES);
+    Serial.println(F(" degrees..."));
+
+    // Drill (rotate backward)
+    bool drillOk = Motor_RotateDegrees(-DRILL_DEGREES, DRILL_SPEED, 8000);
+    if (!drillOk) {
+      Serial.println(F("Drill timeout."));
+      return false;
     }
 
-    Motor_Forward(motor_speed);
-    Stepper_MoveTo(targetX, targetY, targetZ - STEPPER_INCREMENT);
-    Encoder_Update();
+    // Raise Z one step
+    currentZ += Z_STEP;
+    Stepper_MoveTo(x, y, currentZ);
+    delay(200);
 
-    float rpm = Encoder_GetSpeedRPM();
-    int dir = Encoder_GetDirection();
-    
+    load = Loadcell_Read();
+    Serial.print(F("After drill: Z=")); Serial.print(currentZ, 1);
+    Serial.print(F(" Load=")); Serial.println(load, 3);
 
-    load_cell_reading = Loadcell_Read();
+    // --- Check load behavior ---
+    if (load < SLIP_LOAD) {
+      Serial.println(F("Load dropped → slipped. Retrying engagement..."));
+      // Lower Z again to re-engage
+      while (load < ENGAGE_LOAD && currentZ > Z_START - Z_MAX_DROP) {
+        currentZ -= Z_STEP;
+        Stepper_MoveTo(x, y, currentZ);
+        delay(100);
+        load = Loadcell_Read();
+      }
+      if (load < ENGAGE_LOAD) {
+        Serial.println(F("Re-engagement failed."));
+        return false;
+      }
+      Serial.println(F("Re-engaged. Continuing..."));
+    } else if (load > ENGAGE_LOAD * 1.5) {
+      Serial.println(F("High resistance → screw likely out."));
+      break;
+    }
   }
 
-  // -------------------------
-  // Raise Z while engagement exceeded (unscrewing phase)
-  // -------------------------
-  while (load_cell_reading > LOADCELL_THRESHOLD) {
-    Motor_Backward(50);  // unscrewing
-    Stepper_MoveTo(targetX, targetY, targetZ + STEPPER_INCREMENT);
-    load_cell_reading = Loadcell_Read();
-  }
-
-  // -------------------------
-  // Stop DC motor
-  // -------------------------
+  // --- Final lift ---
+  Serial.println(F("Raising to safe Z..."));
+  Stepper_MoveTo(x, y, Z_START);
   Motor_Brake();
 
-  // -------------------------
-  // Move gantry to disposal location
-  // -------------------------
-  Serial.println("Moving screw to disposal area...");
-  Stepper_MoveTo(SCREW_DISPOSAL_X, SCREW_DISPOSAL_Y, SCREW_DISPOSAL_Z);
-  delay(5000); // Wait for 1 second (1000 milliseconds)
-  **/
+  return true;
 }
+
+void processCommand(String cmd) {
+  cmd.trim();
+  cmd.toUpperCase();
+
+  Serial.print(F("> "));
+  Serial.println(cmd);
+
+  /* --------------------------------------------------- */
+  /*  HELP                                               */
+  /* --------------------------------------------------- */
+  if (cmd == "HELP") {
+    printHelp();
+    return;
+  }
+
+  /* --------------------------------------------------- */
+  /*  HOME                                               */
+  /* --------------------------------------------------- */
+  if (cmd == "HOME") {
+    Serial.println(F("Homing all steppers..."));
+    Stepper_HomeAll();
+    Serial.println(F("Homed."));
+    return;
+  }
+
+  /* --------------------------------------------------- */
+  /*  GOTO X Y Z                                         */
+  /* --------------------------------------------------- */
+  if (cmd.startsWith("GOTO ")) {
+  String args = cmd.substring(5);
+  args.trim();
+
+  float x, y, z;
+  int firstSpace = args.indexOf(' ');
+  int secondSpace = args.indexOf(' ', firstSpace + 1);
+
+  if (firstSpace > 0 && secondSpace > 0) {
+    x = args.substring(0, firstSpace).toFloat();
+    y = args.substring(firstSpace + 1, secondSpace).toFloat();
+    z = args.substring(secondSpace + 1).toFloat();
+
+    Serial.print(F("Moving to X=")); Serial.print(x, 2);
+    Serial.print(F(" Y=")); Serial.print(y, 2);
+    Serial.print(F(" Z=")); Serial.println(z, 2);
+
+    Stepper_MoveTo(x, y, z);
+    Serial.println(F("Move complete."));
+  } else {
+    Serial.println(F("Error: GOTO X Y Z  (use spaces, no commas)"));
+  }
+  return;
+}
+
+  /* --------------------------------------------------- */
+  /*  DRILL degrees [speed]                              */
+  /* --------------------------------------------------- */
+  if (cmd.startsWith("DRILL ")) {
+    String args = cmd.substring(6); // everything after "DRILL "
+    args.trim();
+
+    float deg = 0.0;
+    int speed = 180; // default PWM speed
+
+    int spaceIndex = args.indexOf(' ');
+    if (spaceIndex >= 0) {
+        // There is a second value for speed
+        String degStr = args.substring(0, spaceIndex);
+        String speedStr = args.substring(spaceIndex + 1);
+        deg = degStr.toFloat();
+        speed = speedStr.toInt();
+    } else {
+        // Only degrees given
+        deg = args.toFloat();
+    }
+
+    // Clamp speed
+    if (speed < 0)   speed = 0;
+    if (speed > 255) speed = 255;
+
+    Serial.print(F("Rotating "));
+    Serial.print(deg, 2);
+    Serial.print(F(" degrees at PWM "));
+    Serial.println(speed);
+
+    bool ok = Motor_RotateDegrees(deg, speed, 10000);
+    Serial.println(ok ? F("Done.") : F("TIMEOUT!"));
+    return;
+}
+
+  /* --------------------------------------------------- */
+  /*  BRAKE / RPM / POS / LOAD                          */
+  /* --------------------------------------------------- */
+  if (cmd == "BRAKE") {
+    Motor_Brake();
+    Serial.println(F("Drill stopped."));
+    return;
+  }
+  if (cmd == "RPM") {
+    float rpm = Encoder_GetSpeedRPM();
+    Serial.print(F("Drill RPM: "));
+    Serial.println(rpm, 1);
+    return;
+  }
+  if (cmd == "POS") {
+    long pos = Encoder_GetPosition();
+    float deg = pos * 360.0f / 1440.0f;
+    Serial.print(F("Encoder: "));
+    Serial.print(pos);
+    Serial.print(F(" pulses ("));
+    Serial.print(deg, 2);
+    Serial.println(F(" degrees)"));
+    return;
+  }
+  if (cmd == "LOAD") {
+    float load = Loadcell_Read();
+    Serial.print(F("Load cell: "));
+    Serial.println(load, 3);
+    return;
+  }
+
+  /* --------------------------------------------------- */
+  /*  Unknown                                            */
+  /* --------------------------------------------------- */
+  Serial.println(F("Unknown command. Type HELP."));
+
+  /* --------------------------------------------------- */
+  /*  UNSCREW X Y  –  Auto unscrew routine               */
+  /* --------------------------------------------------- */
+  if (cmd.startsWith("UNSCREW ")) {
+    String args = cmd.substring(8);
+    args.trim();
+
+    float x = 0.0;
+    float y = 0.0;
+
+    int spaceIndex = args.indexOf(' ');
+    if (spaceIndex >= 0) {
+        // Split into X and Y parts
+        String xStr = args.substring(0, spaceIndex);
+        String yStr = args.substring(spaceIndex + 1);
+        xStr.trim();
+        yStr.trim();
+        x = xStr.toFloat();
+        y = yStr.toFloat();
+
+        Serial.print(F("Starting UNSCREW at X="));
+        Serial.print(x, 2);
+        Serial.print(F(" Y="));
+        Serial.println(y, 2);
+
+        bool success = autoUnscrew(x, y);
+        Serial.println(success ? F("UNSCREW complete.") : F("UNSCREW failed."));
+    } else {
+        Serial.println(F("Error: UNSCREW X Y"));
+    }
+
+    return;
+  }
+}
+
+

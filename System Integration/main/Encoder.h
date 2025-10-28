@@ -43,4 +43,6 @@ int Encoder_GetDirection();
  */
 void Encoder_Reset();  
 
+void Encoder_ISR();
+
 #endif

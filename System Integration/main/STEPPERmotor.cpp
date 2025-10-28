@@ -3,6 +3,7 @@
 
 #include "STEPPERmotor.h"
 #include "MultiStepperLite.h"
+#include "Loadcell.h"
 
 // === CONFIG ===
 #define STEPS_PER_MM_XY 72.2543352601  // 10000 steps / 138.4 mm
@@ -138,14 +139,20 @@ void Stepper_MoveTo(float x_mm, float y_mm, float z_mm) {
   // Start motors with absolute step counts
   // steppers.start_finite(1, 1000, 2500);
   // steppers.start_finite(2, 1000, 2500);
-  steppers.start_finite(X_MOTOR_INDEX, 1000, x_steps);
-  steppers.start_finite(Y_MOTOR_INDEX, 1000, y_steps);
-  steppers.start_finite(Z_MOTOR_INDEX, 1000, z_steps);
+  steppers.start_finite(X_MOTOR_INDEX, 200, abs(x_steps));
+  steppers.start_finite(Y_MOTOR_INDEX, 200, abs(y_steps));
+  steppers.start_finite(Z_MOTOR_INDEX, 200, abs(z_steps));
 
+  int count = 0;
   // Poll until all motors are finished
   while (!steppers.is_finished(X_MOTOR_INDEX) || 
-         !steppers.is_finished(Y_MOTOR_INDEX) || 
-         !steppers.is_finished(Z_MOTOR_INDEX)) {
+    !steppers.is_finished(Y_MOTOR_INDEX) || 
+    !steppers.is_finished(Z_MOTOR_INDEX)) {
+      // if (count % 50000 == 0) {
+      //   Serial.println(Loadcell_Read());
+      // }
+
+
     steppers.do_tasks();
   }
 

@@ -14,17 +14,30 @@ const byte encoder0pinA = 21;//A pin -> the interrupt pin 0
 const byte encoder0pinB = 25;//B pin -> the digital pin 4
 
 // --- Encoder constants ---
-const int CPR = 2096; 
+const int CPR = 720; 
 
 // --- Internal state ---
 volatile long pulseCount = 0;
 volatile bool direction = true;
-volatile byte lastA = LOW;
+volatile byte lastA = 0;
 
 // --- Speed calculation ---
 static long lastCount = 0;
 static unsigned long lastTime = 0;
 static float lastRPM = 0.0;
+
+
+void Encoder_ISR() {
+  byte a = digitalRead(encoder0pinA);
+  byte b = digitalRead(encoder0pinB);
+
+  // Classic 4-state quadrature decode
+  if (a != lastA) {               // edge on A
+    if (a == b)  pulseCount++;   // forward
+    else         pulseCount--;   // backward
+  }
+  lastA = a;
+}
 
 void Encoder_Init() {
   pinMode(encoder0pinA, INPUT);
@@ -32,6 +45,24 @@ void Encoder_Init() {
   attachInterrupt(digitalPinToInterrupt(encoder0pinA), Encoder_Update, CHANGE);
   lastTime = millis();
 }
+
+// void Encoder_Update() {
+//   static byte lastA = 0;        // Must be static to persist between calls
+//   byte a = digitalRead(encoder0pinA);
+//   byte b = digitalRead(encoder0pinB);
+
+//   // Only act on changes in Channel A
+//   if (a != lastA) {
+//     if (a == b) {
+//       pulseCount++;             // Forward
+//       direction = true;
+//     } else {
+//       pulseCount--;             // Backward
+//       direction = false;
+//     }
+//   }
+//   lastA = a;
+// }
 
 void Encoder_Update() {
   int stateA = digitalRead(encoder0pinA);

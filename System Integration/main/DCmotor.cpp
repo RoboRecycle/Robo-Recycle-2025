@@ -96,10 +96,12 @@ bool Motor_RotateDegrees(float degrees, int speed, unsigned long timeoutMs)
 
     while (true) {
         Encoder_Update();
-        long pos = Encoder_GetPosition();          // current pulse count
+
+        long pos = abs(Encoder_GetPosition());          // current pulse count
         // ----- reached target? -----
-        if (degrees > 0 && pos >= absTarget) break;
-        if (degrees < 0 && pos <= -absTarget) break;
+        if (pos >= absTarget) {
+          break;
+        }
 
         // ----- timeout? -----
         if (timeoutMs && (millis() - start) >= timeoutMs) {
@@ -110,7 +112,6 @@ bool Motor_RotateDegrees(float degrees, int speed, unsigned long timeoutMs)
         // Small delay to keep the loop responsive but not hog CPU
         delay(1);
     }
-    Serial.println("made it to degrees amount");
     // -------------------------------------------------------------------
     // 4. Stop
     // -------------------------------------------------------------------

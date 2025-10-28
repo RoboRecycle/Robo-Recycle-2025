@@ -1,4 +1,7 @@
 #include "DCmotor.h"
+#include "Encoder.h"
+
+extern const int CPR;
 
 /*
   Motor Control Truth Table:
@@ -45,4 +48,72 @@ void Motor_Backward(int speed) {
 void Motor_Brake() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
+}
+
+// ---------------------------------------------------------------------------
+// Helper: absolute target pulse count
+// ---------------------------------------------------------------------------
+static long targetPulses(float degrees)
+{
+    // One full turn = CPR pulses
+    // degrees to pulses:  degrees * CPR / 360
+    return (long)(degrees * CPR / 360.0f);
+}
+
+// ---------------------------------------------------------------------------
+// Motor_RotateDegrees
+// ---------------------------------------------------------------------------
+bool Motor_RotateDegrees(float degrees, int speed, unsigned long timeoutMs)
+{
+    if (speed < 0)   speed = 0;
+    if (speed > 255) speed = 255;
+
+    // -------------------------------------------------------------------
+    // 1. Prepare encoder
+    // -------------------------------------------------------------------
+    Encoder_Reset();                     // start from zero
+    long target = targetPulses(degrees); // may be negative
+    long absTarget = abs(target);
+
+    //Serial.println(target);
+
+    // -------------------------------------------------------------------
+    // 2. Start motor in the correct direction
+    // -------------------------------------------------------------------
+    if (degrees > 0) {
+        Motor_Forward(speed);
+    } else if (degrees < 0) {
+        Motor_Backward(speed);
+    } else {
+        Motor_Brake();                  // 0 degrees to nothing to do
+        return true;
+    }
+
+    // -------------------------------------------------------------------
+    // 3. Wait until we reach the target (or timeout)
+    // -------------------------------------------------------------------
+    unsigned long start = millis();
+
+    while (true) {
+        Encoder_Update();
+        long pos = Encoder_GetPosition();          // current pulse count
+        // ----- reached target? -----
+        if (degrees > 0 && pos >= absTarget) break;
+        if (degrees < 0 && pos <= -absTarget) break;
+
+        // ----- timeout? -----
+        if (timeoutMs && (millis() - start) >= timeoutMs) {
+            Motor_Brake();
+            return false;   // timed-out
+        }
+
+        // Small delay to keep the loop responsive but not hog CPU
+        delay(1);
+    }
+    Serial.println("made it to degrees amount");
+    // -------------------------------------------------------------------
+    // 4. Stop
+    // -------------------------------------------------------------------
+    Motor_Brake();
+    return true;            // success
 }

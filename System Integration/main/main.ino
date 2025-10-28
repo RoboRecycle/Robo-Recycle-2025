@@ -29,14 +29,25 @@ float targetZ = 0.0;
  * @brief Arduino setup function. Initializes all subsystems.
  */
 void setup() {
+
+  DCmotor_Init();
+  STEPPERmotor_Init();
+  Encoder_Init();
+  Loadcell_Init();
+
+  //Stepper_HomeAll();
   Serial.println("System Homed and Ready");
   Serial.begin(115200);
   Serial.println("R2 Robot Starting...");
 
-  //DCmotor_Init();
-  STEPPERmotor_Init();
-  // Encoder_Init();
-  // Loadcell_Init();
+  // 90 degrees forward at 70% speed, max 3 seconds
+    bool ok = Motor_RotateDegrees(-45, 180, 10000);
+    if (!ok) Serial.println("Timeout!");
+
+    delay(1000);
+
+    // 180 degrees backward
+    Motor_RotateDegrees(45, 200, 3000);
 }
 
 /**
@@ -44,8 +55,6 @@ void setup() {
  */
 
 void loop() {
-
-  Stepper_HomeAll();
   delay(2000);
   //Loadcell_Tare();
   Serial.println("System Homed and Ready");

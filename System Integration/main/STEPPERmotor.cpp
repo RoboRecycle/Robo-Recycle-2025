@@ -126,7 +126,6 @@ void Stepper_HomeAll() {
 
 void Stepper_MoveTo(float x_mm, float y_mm, float z_mm) {
   // Convert coordinates to steps
-  Serial.println("DOING");
   long x_steps = (long)((x_mm - currentX) * STEPS_PER_MM_XY);
   long y_steps = (long)((y_mm - currentY) * STEPS_PER_MM_XY);
   long z_steps = (long)((z_mm - currentZ) * STEPS_PER_MM_Z);
@@ -147,7 +146,6 @@ void Stepper_MoveTo(float x_mm, float y_mm, float z_mm) {
   while (!steppers.is_finished(X_MOTOR_INDEX) || 
          !steppers.is_finished(Y_MOTOR_INDEX) || 
          !steppers.is_finished(Z_MOTOR_INDEX)) {
-          Serial.println("DOING");
     steppers.do_tasks();
   }
 

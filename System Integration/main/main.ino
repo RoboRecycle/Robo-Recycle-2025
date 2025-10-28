@@ -46,6 +46,7 @@ void setup() {
 void loop() {
 
   Stepper_HomeAll();
+  delay(2000);
   //Loadcell_Tare();
   Serial.println("System Homed and Ready");
   // -------------------------
@@ -63,7 +64,8 @@ void loop() {
   //   Serial.println(rpm);
   // }
 
-  //Stepper_MoveTo(220, 190.5, 200);
+  Stepper_MoveTo(220, 190.5, 200);
+  delay(2000);
   // Motor_Forward(20);
   // float rpm = Encoder_GetSpeedRPM();
   // while (true) {

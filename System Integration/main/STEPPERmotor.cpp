@@ -5,8 +5,8 @@
 #include "MultiStepperLite.h"
 
 // === CONFIG ===
-#define STEPS_PER_MM_XY 9.09  // 200 steps / 22 mm
-#define STEPS_PER_MM_Z 20     // 500 steps / 25 mm
+#define STEPS_PER_MM_XY 72.2543352601  // 10000 steps / 138.4 mm
+#define STEPS_PER_MM_Z 206.611570248     // 10000 steps / 48.4 mm
 
 // === X AXIS ===
 #define X_STEP_PIN 2
@@ -44,6 +44,10 @@ void setDirection(int dirPin, bool forward) {
 void homeAxis(uint8_t motorIndex, int dirPin, int endstopPin, const char* axisName, bool reverse) {
   Serial.print("Homing ");
   Serial.println(axisName);
+
+  if (digitalRead(endstopPin) == LOW) {
+    return;
+  }
 
   pinMode(dirPin, OUTPUT);
   setDirection(dirPin, reverse ? true : false); // Z homes in positive direction, X/Y negative
@@ -115,9 +119,9 @@ void Stepper_HomeZ() {
 }
 
 void Stepper_HomeAll() {
+  Stepper_HomeZ();
   Stepper_HomeX();
   Stepper_HomeY();
-  Stepper_HomeZ();
 }
 
 void Stepper_MoveTo(float x_mm, float y_mm, float z_mm) {
@@ -128,17 +132,16 @@ void Stepper_MoveTo(float x_mm, float y_mm, float z_mm) {
   long z_steps = (long)((z_mm - currentZ) * STEPS_PER_MM_Z);
 
   // Set direction based on step sign (negative steps = reverse)
-  setDirection(X_DIR_PIN, x_steps <= 0); // AccelStepper used -x_steps, so reverse if positive
-  setDirection(Y_DIR_PIN, y_steps <= 0); // AccelStepper used -y_steps
-  setDirection(Z_DIR_PIN, z_steps >= 0); // Z direction matches steps
+  setDirection(X_DIR_PIN, x_steps >= 0); // AccelStepper used -x_steps, so reverse if positive
+  setDirection(Y_DIR_PIN, y_steps >= 0); // AccelStepper used -y_steps
+  setDirection(Z_DIR_PIN, z_steps <= 0); // Z direction matches steps
 
   // Start motors with absolute step counts
-  // steppers.start_finite(0, 1000, 2500);
   // steppers.start_finite(1, 1000, 2500);
   // steppers.start_finite(2, 1000, 2500);
-  // steppers.start_finite(X_MOTOR_INDEX, 1000, 3000);
-  // steppers.start_finite(Y_MOTOR_INDEX, 1000, 3000);
-  // steppers.start_finite(Z_MOTOR_INDEX, 1000, 3000);
+  steppers.start_finite(X_MOTOR_INDEX, 1000, x_steps);
+  steppers.start_finite(Y_MOTOR_INDEX, 1000, y_steps);
+  steppers.start_finite(Z_MOTOR_INDEX, 1000, z_steps);
 
   // Poll until all motors are finished
   while (!steppers.is_finished(X_MOTOR_INDEX) || 

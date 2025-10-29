@@ -86,7 +86,7 @@ void serialEvent() {
  * @return true if screw removed, false on failure/timeout
  */
 bool autoUnscrew(float x, float y) {
-  const float Z_START       = 200.0;   // safe high Z
+  const float Z_START       = 150;   // safe high Z
   const float Z_STEP        = 0.5;     // mm per step
   const float Z_MAX_DROP    = 50.0;    // max Z travel
   const float DRILL_DEGREES = 720.0;   // 2 full turns per attempt
@@ -108,12 +108,12 @@ bool autoUnscrew(float x, float y) {
 
   // --- 2. Lower Z until engagement ---
   Serial.println(F("Lowering Z to engage screw..."));
-  while (load < ENGAGE_LOAD && (millis() - startTime) < TIMEOUT) {
-    currentZ -= Z_STEP;
-    if (currentZ < Z_START - Z_MAX_DROP) {
-      Serial.println(F("Z limit reached."));
-      return false;
-    }
+  while (load > ENGAGE_LOAD && (millis() - startTime) < TIMEOUT) {
+    currentZ += Z_STEP;
+    // if (currentZ < Z_START - Z_MAX_DROP) {
+    //   Serial.println(F("Z limit reached."));
+    //   return false;
+    // }
     Stepper_MoveTo(x, y, currentZ);
     delay(100);
     load = Loadcell_Read();
@@ -121,12 +121,12 @@ bool autoUnscrew(float x, float y) {
     Serial.print(F(" Load=")); Serial.println(load, 3);
   }
 
-  if (load < ENGAGE_LOAD) {
-    Serial.println(F("Failed to engage screw."));
-    return false;
-  }
+  // if (load < ENGAGE_LOAD) {
+  //   Serial.println(F("Failed to engage screw."));
+  //   return false;
+  // }
 
-  Serial.println(F("Screw engaged! Starting unscrew..."));
+  Serial.println(F("Screw touching"));
 
   // --- 3. Unscrew loop: drill + raise Z ---
   int attempts = 0;
@@ -304,11 +304,6 @@ void processCommand(String cmd) {
   }
 
   /* --------------------------------------------------- */
-  /*  Unknown                                            */
-  /* --------------------------------------------------- */
-  Serial.println(F("Unknown command. Type HELP."));
-
-  /* --------------------------------------------------- */
   /*  UNSCREW X Y  –  Auto unscrew routine               */
   /* --------------------------------------------------- */
   if (cmd.startsWith("UNSCREW ")) {
@@ -341,6 +336,11 @@ void processCommand(String cmd) {
 
     return;
   }
+
+  /* --------------------------------------------------- */
+  /*  Unknown                                            */
+  /* --------------------------------------------------- */
+  Serial.println(F("Unknown command. Type HELP."));
 }
 
 

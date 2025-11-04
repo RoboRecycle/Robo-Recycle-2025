@@ -14,7 +14,7 @@ const byte encoder0pinA = 21;//A pin -> the interrupt pin 0
 const byte encoder0pinB = 25;//B pin -> the digital pin 4
 
 // --- Encoder constants ---
-const int CPR = 720; 
+const int CPR = 900; 
 
 // --- Internal state ---
 volatile long pulseCount = 0;

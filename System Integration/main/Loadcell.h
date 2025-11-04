@@ -4,9 +4,9 @@
 #include <Arduino.h>
 
 // === CONFIG ===
-#define LOADCELL_DOUT_PIN 52   // Data pin
-#define LOADCELL_SCK_PIN 50  // Clock pin
-#define LOADCELL_CALIBRATION_FACTOR 452   // To be calibrated
+#define LOADCELL_DOUT_PIN A14   // Data pin
+#define LOADCELL_SCK_PIN A15  // Clock pin
+#define LOADCELL_CALIBRATION_FACTOR 2280   // To be calibrated
 #define LOADCELL_READING_NUMBER 5
 
 /**

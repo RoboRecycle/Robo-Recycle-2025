@@ -20,7 +20,7 @@ void Loadcell_Init() {
 }
 
 float Loadcell_Read() {
-  return loadcell.read_average(20);  // Get average of LOADCELL_READING_NUMBER of readings, returns calibrated value
+  return loadcell.read_average(3);  // Get average of LOADCELL_READING_NUMBER of readings, returns calibrated value
 }
 
 void Loadcell_Tare() {

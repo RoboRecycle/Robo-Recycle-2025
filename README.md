@@ -118,7 +118,8 @@ Move to (X, Y, Z_START=140)
             → Raise Z 30mm → move to deposit at (225, 310) → release
 ```
 
-See the [flowchart](docs/autounscrew_flowchart.png) for a visual version.
+See the flowchart for a visual version.
+<img width="439" height="806" alt="image" src="https://github.com/user-attachments/assets/1d34e39d-1efd-4b51-a1b6-d81468ff2ddc" />
 
 ---
 

@@ -25,4 +25,15 @@ void Motor_Backward(int speed);
  */
 void Motor_Brake();
 
+/**
+ * Rotate the motor a precise number of degrees using the encoder.
+ *
+ * @param degrees     Positive = forward, negative = backward
+ * @param speed       PWM value 0-255
+ * @param timeoutMs   0 = no timeout
+ * @return true if target reached, false on timeout
+ */
+bool Motor_RotateDegrees(float degrees, int speed = 200,
+                         unsigned long timeoutMs = 0);
+
 #endif

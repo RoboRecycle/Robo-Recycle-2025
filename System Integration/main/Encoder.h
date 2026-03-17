@@ -3,6 +3,13 @@
 
 #include <Arduino.h>
 
+// --- Encoder pins ---
+extern const byte encoder0pinA;
+extern const byte encoder0pinB;
+
+// --- Encoder constants ---
+extern const int CPR;
+
 /**
  * @brief Initialize encoder pins and variables.
  */
@@ -35,5 +42,7 @@ int Encoder_GetDirection();
  * @brief Reset encoder counts
  */
 void Encoder_Reset();  
+
+void Encoder_ISR();
 
 #endif

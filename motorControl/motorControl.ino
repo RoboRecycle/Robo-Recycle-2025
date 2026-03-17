@@ -3,6 +3,7 @@
 
 #include "DCmotor.h"
 
+
 void setup() {
      pinMode(IN1, OUTPUT);
      pinMode(IN2, OUTPUT);
@@ -10,7 +11,7 @@ void setup() {
 }
 
 void loop() {
- Motor1_Brake();
+ //Motor1_Brake();
  delay(100);
  Motor1_Forward(200);
  delay(1000);

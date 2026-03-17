@@ -1,7 +1,8 @@
+#include <Stepper.h>
+
 #ifndef STEPPERMOTOR_H
 #define STEPPERMOTOR_H
 
-#include "STEPPERmotor.h"
 #include "MultiStepperLite.h"
 #include "Loadcell.h"
 

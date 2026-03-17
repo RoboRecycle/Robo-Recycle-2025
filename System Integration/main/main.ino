@@ -107,9 +107,9 @@ bool autoUnscrew(float x, float y) {
   const float ENGAGE_DRILL_DEGREES = 720;   // 2 full turns per attempt
   const float UNSCREW_DRILL_DEGREES = 180;  
   const int   DRILL_SPEED  = 255;
-  const float ENGAGE_LOAD  = -450000.000;     // > this = screw engaged
-  const float Z_UNSCREW_THRESHOLD = -450000.000; // keep moving down until this threshold acheived
-  const float DRILL_STOP_THRESHOLD = -450000.000;
+  const float ENGAGE_LOAD  = -1300000.000;     // > this = screw engaged
+  const float Z_UNSCREW_THRESHOLD = -1300000.000; // keep moving down until this threshold acheived
+  const float DRILL_STOP_THRESHOLD = -1300000.000;
   const unsigned long TIMEOUT = 100000; // 15 sec max
 
   unsigned long startTime = millis();
@@ -213,11 +213,16 @@ bool autoUnscrew(float x, float y) {
   targetZ -= 30;
   Motor_Brake();
   delay(1000);
-  Stepper_MoveTo(225, 310, targetZ);
+  Stepper_MoveTo(225, 280, targetZ);
   delay(1000);
-  Stepper_MoveTo(225, 310, targetZ + 40);
+  Stepper_MoveTo(225, 280, targetZ + 40);
   delay(1000);
-  Stepper_MoveTo(225, 310, targetZ);
+
+  Stepper_MoveTo(225, 330, targetZ + 40);
+  delay(1000);
+  Stepper_MoveTo(225, 330, targetZ);
+  delay(1000);
+
   delay(1000);
   return true;
 }
@@ -456,6 +461,9 @@ void processCommand(String cmd) {
     for (int i = 0; i < 9; i++) {
       float x = hardCodePoints[i][0];
       float y = hardCodePoints[i][1];
+
+      // float x = points[i][0];
+      // float y = points[i][1];
 
       Serial.print(F("--- Screw "));
       Serial.print(i + 1);

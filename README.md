@@ -166,3 +166,8 @@ This is a university capstone engineering project (Robo Recycle). The goal is au
 │   └── Loadcell.h / .cpp
 └── README.md
 ```
+
+## 2024 github
+
+https://github.com/AnujanCenan/Robo-Re-Cycle/blob/main/RaspToArdSerial.py
+
